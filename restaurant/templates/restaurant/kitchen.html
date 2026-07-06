@@ -1,0 +1,146 @@
+{% extends 'restaurant/base.html' %}
+{% load static %}
+
+{% block title %}Kitchen Dashboard | Smart Restaurant{% endblock %}
+
+{% block content %}
+<div class="kitchen-page-container">
+    <div class="kitchen-header">
+        <h1 class="page-title">Kitchen Dashboard</h1>
+        <p class="kitchen-subtitle">Manage and update order status in real-time</p>
+    </div>
+    
+    <div class="kitchen-dashboard-panel">
+        <table class="kitchen-table">
+            <thead>
+                <tr>
+                    <th class="col-order-id">Order ID</th>
+                    <th class="col-customer">Customer</th>
+                    <th class="col-items-list">Items</th>
+                    <th class="col-total-amount">Total</th>
+                    <th class="col-order-status">Status</th>
+                    <th class="col-actions-panel">Action</th>
+                </tr>
+            </thead>
+            <tbody id="kitchen-orders-body">
+                {% for order in orders %}
+                <tr class="kitchen-row" data-order-id="{{ order.id }}">
+                    <td class="cell-order-id">#{{ order.id }}</td>
+                    <td class="cell-customer">
+                        <div class="customer-info-cell">
+                            <span class="cust-name">{{ order.customer_name }}</span>
+                            <span class="cust-details">Table {{ order.table_number }} | {{ order.phone_number }}</span>
+                            {% if order.special_instructions %}
+                            <span class="instructions-pill" title="{{ order.special_instructions }}">📝 Instructions</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="cell-items-list">
+                        <div class="items-list-cell">
+                            <span class="items-count">{{ order.items.count }} item{{ order.items.count|pluralize }}</span>
+                            <div class="items-popover">
+                                {% for item in order.items.all %}
+                                <div>{{ item.quantity }} x {{ item.menu_item.name }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="cell-total-amount">₹{{ order.total_amount|stringformat:".0f" }}</td>
+                    <td class="cell-order-status">
+                        <span class="status-badge {{ order.status|lower }}" id="badge-{{ order.id }}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="cell-actions-panel">
+                        <div class="action-btn-group">
+                            <button class="kitchen-action-btn btn-preparing {% if order.status == 'PREPARING' %}active{% endif %}" data-status="PREPARING">Preparing</button>
+                            <button class="kitchen-action-btn btn-ready {% if order.status == 'READY' %}active{% endif %}" data-status="READY">Ready</button>
+                            <button class="kitchen-action-btn btn-delivered {% if order.status == 'DELIVERED' %}active{% endif %}" data-status="DELIVERED">Delivered</button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="empty-kitchen-message">No orders placed yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const csrfToken = document.getElementById('csrf-token-global').value;
+        const ordersBody = document.getElementById('kitchen-orders-body');
+        
+        if (!ordersBody) return;
+
+        ordersBody.addEventListener('click', function(e) {
+            if (e.target.classList.contains('kitchen-action-btn')) {
+                const button = e.target;
+                const row = button.closest('.kitchen-row');
+                const orderId = row.getAttribute('data-order-id');
+                const status = button.getAttribute('data-status');
+                
+                updateOrderStatus(orderId, status, row, button);
+            }
+        });
+
+        function updateOrderStatus(orderId, status, row, clickedButton) {
+            const url = `/kitchen/update/${orderId}/`;
+            const formData = new FormData();
+            formData.append('status', status);
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Update status badge class and text
+                    const badge = row.querySelector(`#badge-${orderId}`);
+                    badge.className = `status-badge ${data.status.toLowerCase()}`;
+                    badge.textContent = data.status_display;
+                    
+                    // Update active button styling
+                    const buttonGroup = row.querySelector('.action-btn-group');
+                    buttonGroup.querySelectorAll('.kitchen-action-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    clickedButton.classList.add('active');
+                }
+            })
+            .catch(err => console.error("Error updating order status:", err));
+        }
+
+        // Auto-refresh the dashboard every 15 seconds to fetch new orders
+        setInterval(function() {
+            // Only reload if user is not hovering or actively clicking
+            fetch(window.location.href, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newBody = doc.getElementById('kitchen-orders-body');
+                if (newBody && ordersBody) {
+                    // Retain popovers/active button clicks if needed, but since it's a dashboard, full body swap is fine
+                    ordersBody.innerHTML = newBody.innerHTML;
+                }
+            })
+            .catch(err => console.log("Failed to auto-update dashboard:", err));
+        }, 15000);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends 'restaurant/base.html' %}
+{% load static %}
+
+{% block title %}Track Your Order | Smart Restaurant{% endblock %}
+
+{% block content %}
+<div class="track-page-container">
+    <h1 class="page-title">Track Your Order</h1>
+    
+    <!-- Order ID Search Form -->
+    <div class="search-order-card">
+        <form method="GET" action="{% url 'restaurant:track_order' %}" class="search-order-form">
+            <div class="search-group">
+                <label for="order_id_input">Enter Order ID</label>
+                <div class="search-input-wrapper">
+                    <input type="number" id="order_id_input" name="order_id" value="{{ order_id|default:'' }}" placeholder="e.g., 15" required>
+                    <button type="submit" class="btn-orange search-btn">Track Order</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {% if order_id %}
+        {% if order %}
+            <!-- Order Tracking Details -->
+            <div class="order-details-card">
+                <div class="order-header-info">
+                    <div class="order-id-time">
+                        <h2>Order #{{ order.id }}</h2>
+                        <p class="order-time">Placed on {{ order.created_at|date:"d F Y, g:i A" }}</p>
+                    </div>
+                    <div class="order-status-badge-container">
+                        <span class="status-badge {{ order.status|lower }}">
+                            Current Status: <span class="status-text">{{ order.get_status_display }}</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Order Progress Timeline -->
+                <div class="progress-timeline-container">
+                    <h3 class="progress-title">Order Progress</h3>
+                    
+                    <div class="timeline-stepper">
+                        <!-- Step 1: Received -->
+                        <div class="timeline-step {% if order.status == 'RECEIVED' or order.status == 'PREPARING' or order.status == 'READY' or order.status == 'DELIVERED' %}completed{% endif %} {% if order.status == 'RECEIVED' %}current{% endif %}">
+                            <div class="step-circle">✓</div>
+                            <div class="step-label">Received</div>
+                        </div>
+                        
+                        <div class="timeline-line {% if order.status == 'PREPARING' or order.status == 'READY' or order.status == 'DELIVERED' %}active{% endif %}"></div>
+                        
+                        <!-- Step 2: Preparing -->
+                        <div class="timeline-step {% if order.status == 'PREPARING' or order.status == 'READY' or order.status == 'DELIVERED' %}completed{% endif %} {% if order.status == 'PREPARING' %}current{% endif %}">
+                            <div class="step-circle">✓</div>
+                            <div class="step-label">Preparing</div>
+                        </div>
+                        
+                        <div class="timeline-line {% if order.status == 'READY' or order.status == 'DELIVERED' %}active{% endif %}"></div>
+                        
+                        <!-- Step 3: Ready -->
+                        <div class="timeline-step {% if order.status == 'READY' or order.status == 'DELIVERED' %}completed{% endif %} {% if order.status == 'READY' %}current{% endif %}">
+                            <div class="step-circle">✓</div>
+                            <div class="step-label">Ready</div>
+                        </div>
+                        
+                        <div class="timeline-line {% if order.status == 'DELIVERED' %}active{% endif %}"></div>
+                        
+                        <!-- Step 4: Delivered -->
+                        <div class="timeline-step {% if order.status == 'DELIVERED' %}completed{% endif %} {% if order.status == 'DELIVERED' %}current{% endif %}">
+                            <div class="step-circle">✓</div>
+                            <div class="step-label">Delivered</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order items breakdown -->
+                <div class="order-items-breakdown">
+                    <h3 class="breakdown-title">Order Items</h3>
+                    <div class="breakdown-list">
+                        {% for item in order.items.all %}
+                        <div class="breakdown-row">
+                            <span class="breakdown-name-qty">{{ item.quantity }} x {{ item.menu_item.name }}</span>
+                            <span class="breakdown-price">₹{{ item.price|stringformat:".0f" }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="breakdown-divider"></div>
+                    <div class="breakdown-total-row">
+                        <span class="total-label">Total</span>
+                        <span class="total-value">₹{{ order.total_amount|stringformat:".0f" }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Auto-refresh mechanism so user gets updates -->
+            <div class="auto-refresh-notice">
+                <p>This page auto-refreshes every 10 seconds to keep you updated on your order status.</p>
+            </div>
+        {% else %}
+            <div class="no-order-card">
+                <div class="error-icon">❌</div>
+                <h2>Order Not Found</h2>
+                <p>We couldn't find an order with ID <strong>{{ order_id }}</strong>. Please check your order ID and try again.</p>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="track-placeholder-card">
+            <div class="track-placeholder-icon">📍</div>
+            <h2>Enter your Order ID to track status</h2>
+            <p>You can find the Order ID on the confirmation screen after placing your order.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if order and order.status != 'DELIVERED' %}
+<script>
+    // Refresh page every 10 seconds to track live changes
+    setTimeout(function() {
+        window.location.reload();
+    }, 10000);
+</script>
+{% endif %}
+{% endblock %}

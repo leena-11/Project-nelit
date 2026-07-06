@@ -1,0 +1,234 @@
+{% extends 'restaurant/base.html' %}
+{% load static %}
+
+{% block title %}Your Cart | Smart Restaurant{% endblock %}
+
+{% block content %}
+<div class="cart-page-container">
+    <h1 class="page-title">Your Cart</h1>
+    
+    {% if cart %}
+    <div class="cart-layout">
+        <!-- Cart Items List -->
+        <div class="cart-items-panel">
+            <table class="cart-table">
+                <thead>
+                    <tr>
+                        <th class="col-item">Item</th>
+                        <th class="col-price">Price</th>
+                        <th class="col-qty">Quantity</th>
+                        <th class="col-total">Total</th>
+                        <th class="col-action">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="cart-items-body">
+                    {% for item in cart %}
+                    <tr class="cart-row" data-item-id="{{ item.menu_item.id }}">
+                        <td class="cell-item">
+                            <div class="cart-item-info">
+                                <div class="cart-item-img-wrapper">
+                                    {% if item.menu_item.image %}
+                                        <img src="{{ item.menu_item.image.url }}" alt="{{ item.menu_item.name }}" class="cart-item-img">
+                                    {% else %}
+                                        <div class="cart-item-img-placeholder">🍲</div>
+                                    {% endif %}
+                                </div>
+                                <div class="cart-item-name-desc">
+                                    <span class="cart-item-name">{{ item.menu_item.name }}</span>
+                                    {% if item.menu_item.is_veg %}
+                                        <span class="diet-badge-simple veg-badge-simple">Veg</span>
+                                    {% else %}
+                                        <span class="diet-badge-simple non-veg-badge-simple">Non-Veg</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="cell-price">₹{{ item.price|stringformat:".0f" }}</td>
+                        <td class="cell-qty">
+                            <div class="quantity-controller">
+                                <button class="qty-btn btn-minus" data-action="minus">−</button>
+                                <input type="number" class="qty-input" value="{{ item.quantity }}" min="1" max="50">
+                                <button class="qty-btn btn-plus" data-action="plus">+</button>
+                            </div>
+                        </td>
+                        <td class="cell-total row-total-price">₹{{ item.total_price|stringformat:".0f" }}</td>
+                        <td class="cell-action">
+                            <button class="remove-btn">Remove</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Cart Summary Panel -->
+        <div class="cart-summary-panel">
+            <div class="summary-card">
+                <div class="summary-row">
+                    <span class="summary-label">Subtotal</span>
+                    <span class="summary-value" id="summary-subtotal">₹{{ cart.get_subtotal|stringformat:".0f" }}</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">GST (5%)</span>
+                    <span class="summary-value" id="summary-gst">₹{{ cart.get_gst|stringformat:".0f" }}</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-row grand-total-row">
+                    <span class="summary-label">Grand Total</span>
+                    <span class="summary-value" id="summary-total">₹{{ cart.get_total|stringformat:".0f" }}</span>
+                </div>
+                
+                <div class="summary-actions">
+                    <a href="{% url 'restaurant:checkout' %}" class="btn-orange checkout-btn">Proceed to Checkout</a>
+                    <a href="{% url 'restaurant:menu' %}" class="btn-gray continue-btn">Continue Shopping</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Empty Cart state (hidden if cart has items) -->
+    <div id="empty-cart-message" class="empty-cart-container" style="display: none;">
+        <div class="empty-cart-icon">🛒</div>
+        <h2>Your cart is empty!</h2>
+        <p>Go to the menu to add some mouthwatering dishes.</p>
+        <a href="{% url 'restaurant:menu' %}" class="btn-orange empty-cart-btn">View Menu</a>
+    </div>
+    
+    {% else %}
+    <div class="empty-cart-container">
+        <div class="empty-cart-icon">🛒</div>
+        <h2>Your cart is empty!</h2>
+        <p>Go to the menu to add some mouthwatering dishes.</p>
+        <a href="{% url 'restaurant:menu' %}" class="btn-orange empty-cart-btn">View Menu</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const csrfToken = document.getElementById('csrf-token-global').value;
+        const cartItemsBody = document.getElementById('cart-items-body');
+        const cartCountNav = document.getElementById('cart-nav-count');
+        const subtotalEl = document.getElementById('summary-subtotal');
+        const gstEl = document.getElementById('summary-gst');
+        const totalEl = document.getElementById('summary-total');
+        
+        if (!cartItemsBody) return; // Exit if cart is empty initially
+
+        // Delegate click and input events on cart table
+        cartItemsBody.addEventListener('click', function(e) {
+            const row = e.target.closest('.cart-row');
+            if (!row) return;
+            const itemId = row.getAttribute('data-item-id');
+
+            // Handle Quantity buttons
+            if (e.target.classList.contains('qty-btn')) {
+                const input = row.querySelector('.qty-input');
+                let currentVal = parseInt(input.value);
+                const action = e.target.getAttribute('data-action');
+                
+                if (action === 'minus') {
+                    if (currentVal > 1) {
+                        input.value = currentVal - 1;
+                        updateQuantity(itemId, currentVal - 1, row);
+                    } else {
+                        // If quantity is 1 and user presses minus, confirm removal
+                        if (confirm("Remove this item from your cart?")) {
+                            removeItem(itemId, row);
+                        }
+                    }
+                } else if (action === 'plus') {
+                    input.value = currentVal + 1;
+                    updateQuantity(itemId, currentVal + 1, row);
+                }
+            }
+
+            // Handle Remove button
+            if (e.target.classList.contains('remove-btn')) {
+                if (confirm("Remove this item from your cart?")) {
+                    removeItem(itemId, row);
+                }
+            }
+        });
+
+        // Handle direct input change
+        cartItemsBody.addEventListener('change', function(e) {
+            if (e.target.classList.contains('qty-input')) {
+                const row = e.target.closest('.cart-row');
+                const itemId = row.getAttribute('data-item-id');
+                let val = parseInt(e.target.value);
+                
+                if (isNaN(val) || val < 1) {
+                    val = 1;
+                    e.target.value = 1;
+                } else if (val > 50) {
+                    val = 50;
+                    e.target.value = 50;
+                }
+                updateQuantity(itemId, val, row);
+            }
+        });
+
+        function updateQuantity(itemId, quantity, row) {
+            const url = `/cart/update/${itemId}/`;
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ quantity: quantity, override: true })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Update item row total
+                    row.querySelector('.row-total-price').textContent = `₹${Math.round(data.item_total)}`;
+                    // Update summary totals
+                    updateSummaryTotals(data);
+                }
+            })
+            .catch(err => console.error("Error updating cart quantity:", err));
+        }
+
+        function removeItem(itemId, row) {
+            const url = `/cart/remove/${itemId}/`;
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove row from DOM
+                    row.remove();
+                    
+                    // Update summary totals
+                    updateSummaryTotals(data);
+                    
+                    // Check if cart is empty
+                    if (data.cart_count === 0) {
+                        document.querySelector('.cart-layout').style.display = 'none';
+                        document.getElementById('empty-cart-message').style.display = 'flex';
+                    }
+                }
+            })
+            .catch(err => console.error("Error removing cart item:", err));
+        }
+
+        function updateSummaryTotals(data) {
+            cartCountNav.textContent = data.cart_count;
+            subtotalEl.textContent = `₹${Math.round(data.subtotal)}`;
+            gstEl.textContent = `₹${Math.round(data.gst)}`;
+            totalEl.textContent = `₹${Math.round(data.total)}`;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'restaurant/base.html' %}
+{% load static %}
+
+{% block title %}Home | Smart Restaurant{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+    <div class="hero-container">
+        <div class="hero-text-block">
+            <h1 class="hero-title">Delicious<br>Food, Delivered<br>Fast!</h1>
+            <p class="hero-subtitle">Order your favorite meals from our wide range of cuisines right to your table.</p>
+            <a href="{% url 'restaurant:menu' %}" class="btn-orange hero-btn">View Menu</a>
+        </div>
+        <div class="hero-image-block">
+            <div class="hero-image-wrapper">
+                <img src="/media/hero/burger_hero.png" alt="Delicious Burger" class="hero-img">
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="categories-section">
+    <div class="section-container">
+        <h2 class="section-title">Categories</h2>
+        <div class="categories-grid">
+            {% for cat in categories %}
+            <a href="{% url 'restaurant:menu' %}?category={{ cat.slug }}" class="category-card">
+                <div class="category-image-wrapper">
+                    {% if cat.image %}
+                        <img src="{{ cat.image.url }}" alt="{{ cat.name }}" class="category-img">
+                    {% else %}
+                        <div class="category-img-placeholder">🍽️</div>
+                    {% endif %}
+                </div>
+                <div class="category-info">
+                    <h3 class="category-name">{{ cat.name }}</h3>
+                    <p class="category-count">{{ cat.item_count }} item{{ cat.item_count|pluralize }}</p>
+                </div>
+            </a>
+            {% empty %}
+            <p class="empty-message">No categories available.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends 'restaurant/base.html' %}
+{% load static %}
+
+{% block title %}Checkout | Smart Restaurant{% endblock %}
+
+{% block content %}
+<div class="checkout-page-container">
+    <h1 class="page-title">Checkout</h1>
+    
+    <div class="checkout-layout">
+        <!-- Delivery/Dine-in details form -->
+        <div class="checkout-form-panel">
+            <h2 class="panel-subtitle">Delivery Details</h2>
+            <form method="POST" action="{% url 'restaurant:checkout' %}" class="checkout-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="customer_name">Full Name</label>
+                    <input type="text" id="customer_name" name="customer_name" placeholder="Leena Jarapala" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone_number">Phone Number</label>
+                    <input type="tel" id="phone_number" name="phone_number" placeholder="9876543210" pattern="[0-9]{10}" title="Ten digit mobile number" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="table_number">Table Number (Optional / Dine-in)</label>
+                    <input type="number" id="table_number" name="table_number" placeholder="12" min="1" max="100" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="special_instructions">Special Instructions (Optional)</label>
+                    <textarea id="special_instructions" name="special_instructions" rows="4" placeholder="Any special instructions... e.g., make it extra spicy, no ice in drink..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn-orange place-order-btn">Place Order</button>
+            </form>
+        </div>
+        
+        <!-- Order Summary side panel -->
+        <div class="checkout-summary-panel">
+            <div class="summary-card-checkout">
+                <h2 class="summary-title-checkout">Order Summary</h2>
+                <div class="checkout-items-list">
+                    {% for item in cart %}
+                    <div class="checkout-item-row">
+                        <div class="checkout-item-details">
+                            <span class="checkout-item-name">{{ item.menu_item.name }}</span>
+                            <span class="checkout-item-qty">x {{ item.quantity }}</span>
+                        </div>
+                        <span class="checkout-item-price">₹{{ item.total_price|stringformat:".0f" }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="summary-divider-checkout"></div>
+                <div class="checkout-total-row">
+                    <span>Subtotal</span>
+                    <span>₹{{ cart.get_subtotal|stringformat:".0f" }}</span>
+                </div>
+                <div class="checkout-total-row">
+                    <span>GST (5%)</span>
+                    <span>₹{{ cart.get_gst|stringformat:".0f" }}</span>
+                </div>
+                <div class="summary-divider-checkout"></div>
+                <div class="checkout-total-row grand-total-checkout">
+                    <span>Grand Total</span>
+                    <span>₹{{ cart.get_total|stringformat:".0f" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

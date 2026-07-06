@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Smart Restaurant{% endblock %}</title>
+    <meta name="description" content="Order delicious food from your table. Direct, fresh, and smart ordering.">
+    <!-- Google Fonts: Outfit (headings) & Inter (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Top Navigation Header -->
+    <header class="main-header">
+        <div class="nav-container">
+            <a href="{% url 'restaurant:home' %}" class="brand-logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" fill="#FF5E14" fill-opacity="0.15"/>
+                    <circle cx="12" cy="12" r="6" fill="#FF5E14"/>
+                </svg>
+                <span>Smart Restaurant</span>
+            </a>
+            
+            <nav class="nav-links">
+                <a href="{% url 'restaurant:home' %}" class="{% if request.resolver_match.view_name == 'restaurant:home' %}active{% endif %}">Home</a>
+                <a href="{% url 'restaurant:menu' %}" class="{% if request.resolver_match.view_name == 'restaurant:menu' %}active{% endif %}">Menu</a>
+                <a href="{% url 'restaurant:cart_detail' %}" class="cart-nav-link {% if request.resolver_match.view_name == 'restaurant:cart_detail' %}active{% endif %}">
+                    Cart (<span id="cart-nav-count">{{ cart|length }}</span>)
+                </a>
+                <a href="{% url 'restaurant:track_order' %}" class="{% if request.resolver_match.view_name == 'restaurant:track_order' %}active{% endif %}">Track Order</a>
+                <a href="{% url 'restaurant:kitchen_dashboard' %}" class="{% if request.resolver_match.view_name == 'restaurant:kitchen_dashboard' %}active{% endif %}">Kitchen</a>
+                
+                {% if user.is_authenticated %}
+                    <form action="/admin/logout/" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="admin-logout-btn" style="cursor: pointer;">Logout (admin)</button>
+                    </form>
+                {% else %}
+                    <a href="/admin/" class="admin-logout-btn">Admin Login</a>
+                {% endif %}
+                <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: inherit;">☀️</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- CSRF Token for JS AJAX -->
+    <input type="hidden" id="csrf-token-global" value="{{ csrf_token }}">
+
+    <footer class="main-footer">
+        <p>&copy; 2026 Smart Restaurant. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+        const currentTheme = localStorage.getItem('theme') || 'dark';
+        
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        themeToggle.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+
+        themeToggle.addEventListener('click', () => {
+            let theme = document.documentElement.getAttribute('data-theme');
+            let newTheme = theme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

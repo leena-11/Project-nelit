@@ -1,0 +1,118 @@
+{% extends 'restaurant/base.html' %}
+{% load static %}
+
+{% block title %}Our Menu | Smart Restaurant{% endblock %}
+
+{% block content %}
+<div class="menu-page-container">
+    <h1 class="page-title">Our Menu</h1>
+    
+    <!-- Category Tabs -->
+    <div class="category-tabs">
+        <a href="{% url 'restaurant:menu' %}?category=all" class="tab-btn {% if selected_category == 'all' %}active{% endif %}">All</a>
+        {% for cat in categories %}
+            <a href="{% url 'restaurant:menu' %}?category={{ cat.slug }}" class="tab-btn {% if selected_category == cat.slug %}active{% endif %}">{{ cat.name }}</a>
+        {% endfor %}
+    </div>
+
+    <!-- Menu Items Grid -->
+    <div class="menu-items-grid">
+        {% for item in items %}
+        <div class="menu-item-card">
+            <div class="menu-item-image-wrapper">
+                {% if item.image %}
+                    <img src="{{ item.image.url }}" alt="{{ item.name }}" class="menu-item-img" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="menu-item-img-placeholder" style="display: none;">🍲</div>
+                {% else %}
+                    <div class="menu-item-img-placeholder">🍲</div>
+                {% endif %}
+            </div>
+            <div class="menu-item-content">
+                <div class="menu-item-header">
+                    <!-- Veg / Non-Veg Badge -->
+                    <span class="diet-badge {% if item.is_veg %}veg{% else %}non-veg{% endif %}">
+                        <span class="diet-dot"></span>
+                        <span class="diet-text">{% if item.is_veg %}Veg{% else %}Non-Veg{% endif %}</span>
+                    </span>
+                </div>
+                <h3 class="menu-item-name">{{ item.name }}</h3>
+                <p class="menu-item-description">{{ item.description }}</p>
+                <div class="menu-item-footer">
+                    <span class="menu-item-price">₹{{ item.price|stringformat:".0f" }}</span>
+                    <button class="btn-orange add-to-cart-btn" data-item-id="{{ item.id }}">Add to Cart</button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="empty-message">No menu items found in this category.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Toast Message Container -->
+<div id="toast-container" class="toast-container"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const csrfToken = document.getElementById('csrf-token-global').value;
+        const addToCartBtns = document.querySelectorAll('.add-to-cart-btn');
+        const cartCountNav = document.getElementById('cart-nav-count');
+
+        addToCartBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const itemId = this.getAttribute('data-item-id');
+                const url = `/cart/add/${itemId}/`;
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ quantity: 1 })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update cart count
+                        cartCountNav.textContent = data.cart_count;
+                        
+                        // Show success toast
+                        showToast(data.message);
+                    } else {
+                        showToast("Failed to add item to cart. Please try again.");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding to cart:', error);
+                    showToast("Error adding item to cart.");
+                });
+            });
+        });
+
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast-message';
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            // Animate in
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    container.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+    });
+</script>
+{% endblock %}
