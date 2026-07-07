@@ -1,20 +1,23 @@
 import os
 import django
 
+# Set DJANGO_SETTINGS_MODULE
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'smart_restaurant.settings')
+
+# Call django.setup()
+django.setup()
+
+from django.contrib.auth import get_user_model
+
 def create_admin():
-    # Setup Django environment
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'smart_restaurant.settings')
-    django.setup()
-
-    from django.contrib.auth import get_user_model
-
     User = get_user_model()
     
-    # Read environment variables with fallback defaults to ensure deployability without manual setup
-    username = os.environ.get('DJANGO_SUPERUSER_USERNAME') or os.environ.get('SUPERUSER_USERNAME') or 'admin'
-    email = os.environ.get('DJANGO_SUPERUSER_EMAIL') or os.environ.get('SUPERUSER_EMAIL') or 'admin@example.com'
-    password = os.environ.get('DJANGO_SUPERUSER_PASSWORD') or os.environ.get('SUPERUSER_PASSWORD') or 'admin123'
+    # Read credentials from environment variables with defaults
+    username = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'admin')
+    email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'admin@example.com')
+    password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'admin123')
 
+    # Create a superuser only if one does not already exist
     if not User.objects.filter(username=username).exists():
         print(f"Creating superuser '{username}'...")
         User.objects.create_superuser(username=username, email=email, password=password)

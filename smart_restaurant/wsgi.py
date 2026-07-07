@@ -14,11 +14,3 @@ from django.core.wsgi import get_wsgi_application
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'smart_restaurant.settings')
 
 application = get_wsgi_application()
-
-# Automatically create superuser on application startup
-try:
-    from create_superuser import create_admin
-    create_admin()
-except Exception as e:
-    import sys
-    print(f"Auto superuser creation failed: {e}", file=sys.stderr)

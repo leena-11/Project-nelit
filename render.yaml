@@ -2,9 +2,21 @@ services:
   - type: web
     name: project-nelit-1
     runtime: python
+
     buildCommand: |
       pip install -r requirements.txt
       python manage.py collectstatic --no-input
+
+    startCommand: |
       python manage.py migrate
       python manage.py seed_db
-    startCommand: gunicorn smart_restaurant.wsgi:application
+      python create_superuser.py
+      gunicorn smart_restaurant.wsgi:application
+
+    envVars:
+      - key: DJANGO_SUPERUSER_USERNAME
+        value: admin
+      - key: DJANGO_SUPERUSER_EMAIL
+        value: admin@example.com
+      - key: DJANGO_SUPERUSER_PASSWORD
+        value: admin123
