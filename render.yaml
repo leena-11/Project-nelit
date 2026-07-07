@@ -10,13 +10,4 @@ services:
     startCommand: |
       python manage.py migrate
       python manage.py seed_db
-      python create_superuser.py
       gunicorn smart_restaurant.wsgi:application
-
-    envVars:
-      - key: DJANGO_SUPERUSER_USERNAME
-        value: admin
-      - key: DJANGO_SUPERUSER_EMAIL
-        value: admin@example.com
-      - key: DJANGO_SUPERUSER_PASSWORD
-        value: admin123
