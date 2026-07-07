@@ -20,8 +20,8 @@
         {% for item in items %}
         <div class="menu-item-card">
             <div class="menu-item-image-wrapper">
-                {% if item.image %}
-                    <img src="{{ item.image.url }}" alt="{{ item.name }}" class="menu-item-img" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                {% if item.static_image_path %}
+                    <img src="{% static item.static_image_path %}" alt="{{ item.name }}" class="menu-item-img" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div class="menu-item-img-placeholder" style="display: none;">🍲</div>
                 {% else %}
                     <div class="menu-item-img-placeholder">🍲</div>

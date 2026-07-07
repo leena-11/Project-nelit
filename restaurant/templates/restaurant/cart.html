@@ -27,8 +27,8 @@
                         <td class="cell-item">
                             <div class="cart-item-info">
                                 <div class="cart-item-img-wrapper">
-                                    {% if item.menu_item.image %}
-                                        <img src="{{ item.menu_item.image.url }}" alt="{{ item.menu_item.name }}" class="cart-item-img">
+                                    {% if item.menu_item.static_image_path %}
+                                        <img src="{% static item.menu_item.static_image_path %}" alt="{{ item.menu_item.name }}" class="cart-item-img">
                                     {% else %}
                                         <div class="cart-item-img-placeholder">🍲</div>
                                     {% endif %}

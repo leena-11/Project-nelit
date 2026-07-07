@@ -8,6 +8,13 @@ class Category(models.Model):
     class Meta:
         verbose_name_plural = 'Categories'
 
+    @property
+    def static_image_path(self):
+        """Return the static file path for this category's default image."""
+        if self.image and self.image.name:
+            return f'images/{self.image.name}'
+        return ''
+
     def __str__(self):
         return self.name
 
@@ -16,8 +23,15 @@ class MenuItem(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2)
-    image = models.ImageField(upload_to='menu/')
+    image = models.ImageField(upload_to='menu/', blank=True, null=True)
     is_veg = models.BooleanField(default=True)
+
+    @property
+    def static_image_path(self):
+        """Return the static file path for this menu item's default image."""
+        if self.image and self.image.name:
+            return f'images/{self.image.name}'
+        return ''
 
     def __str__(self):
         return self.name

@@ -13,7 +13,7 @@
         </div>
         <div class="hero-image-block">
             <div class="hero-image-wrapper">
-                <img src="/media/hero/burger_hero.png" alt="Delicious Burger" class="hero-img">
+                <img src="{% static 'images/hero/burger_hero.png' %}" alt="Delicious Burger" class="hero-img">
             </div>
         </div>
     </div>
@@ -26,8 +26,8 @@
             {% for cat in categories %}
             <a href="{% url 'restaurant:menu' %}?category={{ cat.slug }}" class="category-card">
                 <div class="category-image-wrapper">
-                    {% if cat.image %}
-                        <img src="{{ cat.image.url }}" alt="{{ cat.name }}" class="category-img">
+                    {% if cat.static_image_path %}
+                        <img src="{% static cat.static_image_path %}" alt="{{ cat.name }}" class="category-img">
                     {% else %}
                         <div class="category-img-placeholder">🍽️</div>
                     {% endif %}
