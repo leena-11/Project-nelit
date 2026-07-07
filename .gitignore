@@ -18,7 +18,7 @@ env/
 *.log
 *.pot
 db.sqlite3
-media/
+# media/
 
 # Static files collected
 staticfiles/

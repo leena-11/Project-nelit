@@ -207,7 +207,7 @@ class Command(BaseCommand):
                 'price': 120.00,
                 'is_veg': True,
                 'image_name': 'gajar_halwa.png',
-                'url': 'https://t3.ftcdn.net/jpg/02/76/86/35/360_F_276863544_V3l86xK5qZkC2NfM54D592C4W2595B0J.jpg'
+                'url': 'https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?w=500&auto=format&fit=crop&q=80'
             },
             {
                 'category_slug': 'beverages',
