@@ -10,7 +10,7 @@ User = get_user_model()
 
 USERNAME = "admin"
 EMAIL = "admin@example.com"
-PASSWORD = "Leena@2026"
+PASSWORD = "Admin@123"
 
 if not User.objects.filter(username=USERNAME).exists():
     User.objects.create_superuser(
